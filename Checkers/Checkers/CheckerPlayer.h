@@ -5,6 +5,8 @@
 #include "glm\vec2.hpp"
 #include "glm\vec4.hpp"
 
+class CheckerBoard;
+
 class CheckerPlayer
 {
 public:
@@ -14,6 +16,7 @@ public:
 	glm::vec4* Update(float dt);
 
 	void SetWindow(GLFWwindow* window);
+	void SetBoard(CheckerBoard* board);
 
 	Piece* GetPieceAtPos(int x, int y);
 	Piece* GetPiece(int i);
@@ -25,6 +28,8 @@ protected:
 	Piece* m_currentPiece;
 
 	glm::vec2 m_cursor;
+
+	CheckerBoard* m_board;
 
 	float m_selectCooldown;
 

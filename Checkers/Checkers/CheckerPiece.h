@@ -9,3 +9,5 @@ static struct Piece
 	//true for king
 	bool m_type = false;
 };
+
+static enum PieceType { EMPTY, WHITE, BLACK, WHITEKING, BLACKKING, VALID };

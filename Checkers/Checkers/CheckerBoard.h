@@ -1,11 +1,11 @@
 #pragma once
 #include "CheckerAI.h"
 #include "CheckerPlayer.h"
+#include "CheckerPiece.h"
 #include "Gizmos.h"
 #include "Application.h"
 #include "FlyCamera.h"
-
-static enum PieceType {EMPTY, WHITE, BLACK, WHITEKING, BLACKKING};
+#include "glm\vec2.hpp"
 
 class CheckerBoard : public Application
 {
@@ -20,13 +20,23 @@ public:
 
 	void ClearBoard();
 
+	void CheckValidMoves(glm::vec2 piece);
+
+	PieceType** GetBoardState();
+	void FindAllPotentialMoves(bool white);
+	void RemoveValidMoves();
+
+	bool GetForceJump();
+
 protected:
 	FlyCamera m_camera;
 
 	PieceType m_board[8][8];
+	PieceType** m_validMoves;
 
 	CheckerAI* m_ai;
 	CheckerPlayer* m_player;
 
 	bool m_playerTurn;
+	bool m_forceJump;
 };

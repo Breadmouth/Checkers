@@ -1,4 +1,5 @@
 #include "CheckerPlayer.h"
+#include "CheckerBoard.h"
 
 
 CheckerPlayer::CheckerPlayer()
@@ -64,6 +65,9 @@ glm::vec4* CheckerPlayer::Update(float dt)
 
 		if (glfwGetKey(m_window, GLFW_KEY_ENTER) == GLFW_PRESS)
 		{
+			//m_board->FindAllPotentialMoves(true);
+			PieceType** tempBoard = m_board->GetBoardState();
+
 			if (m_currentPiece != NULL)
 			{
 				for (int i = 0; i < 12; ++i)
@@ -74,22 +78,224 @@ glm::vec4* CheckerPlayer::Update(float dt)
 						return &glm::vec4(0);
 					}
 				}
-				if (!m_currentPiece->m_type)
-				{
-					if (m_cursor.x == m_currentPiece->m_x + 1 && m_cursor.y == m_currentPiece->m_y - 1 ||
-						m_cursor.x == m_currentPiece->m_x - 1 && m_cursor.y == m_currentPiece->m_y - 1)
-					{
-						glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
 
-						m_currentPiece->m_x = m_cursor.x;
-						m_currentPiece->m_y = m_cursor.y;
-						if (m_currentPiece->m_y == 0)
+				if (!m_currentPiece->m_type) // not a king
+				{
+					for (int i = 0; i < 8; ++i)
+					{
+						for (int j = 0; j < 8; ++j)
 						{
-							m_currentPiece->m_type == true;
+							if (i == (int)m_cursor.x && j == (int)m_cursor.y)
+							{
+								if (i == m_currentPiece->m_x + 1 && j == m_currentPiece->m_y - 1 ||
+									i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y - 1)
+								{
+									if (tempBoard[i][j] == VALID)
+									{
+										//move piece and end turn
+										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+										m_currentPiece->m_x = j;
+										m_currentPiece->m_y = i;
+										if (m_currentPiece->m_y == 0)
+										{
+											m_currentPiece->m_type == true;
+										}
+										m_currentPiece = nullptr;
+										m_board->RemoveValidMoves();
+										return &glm::vec4(oldPos.x, oldPos.y, j, i);
+
+									}
+									if (tempBoard[i][j] == BLACK || tempBoard[i][j] == BLACKKING)
+									{
+										//check if you can jump it
+										if (j - 1 >= 0)
+										{
+											if (i + 1 < 8 && i + 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i + 1][j - 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j - 1;
+													m_currentPiece->m_y = i + 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j - 1, i + 1);
+													//check for consecutive jumps
+												}
+											}
+											if (i - 1 >= 0 && i - 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i - 1][j - 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j - 1;
+													m_currentPiece->m_y = i - 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j - 1, i - 1);
+													//check for consecutive jumps
+												}
+											}
+										}
+									}
+								}
+							}
 						}
-						m_currentPiece = nullptr;
-						//careful casting int to float and back
-						return &glm::vec4(oldPos.x, oldPos.y, m_cursor.x, m_cursor.y);
+					}
+				}
+				else //a king
+				{
+					for (int i = 0; i < 8; ++i)
+					{
+						for (int j = 0; j < 8; ++j)
+						{
+							if (i == (int)m_cursor.x && j == (int)m_cursor.y)
+							{
+								if (i == m_currentPiece->m_x + 1 && j == m_currentPiece->m_y - 1 ||
+									i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y - 1)
+								{
+									if (tempBoard[i][j] == VALID)
+									{
+										//move piece and end turn
+										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+										m_currentPiece->m_x = j;
+										m_currentPiece->m_y = i;
+										if (m_currentPiece->m_y == 0)
+										{
+											m_currentPiece->m_type == true;
+										}
+										m_currentPiece = nullptr;
+										m_board->RemoveValidMoves();
+										return &glm::vec4(oldPos.x, oldPos.y, j, i);
+
+									}
+									if (tempBoard[i][j] == BLACK || tempBoard[i][j] == BLACKKING)
+									{
+										//check if you can jump it
+										if (j - 1 >= 0)
+										{
+											if (i + 1 < 8 && i + 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i + 1][j - 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j - 1;
+													m_currentPiece->m_y = i + 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j - 1, i + 1);
+													//check for consecutive jumps
+												}
+											}
+											if (i - 1 > 0 && i - 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i - 1][j - 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j - 1;
+													m_currentPiece->m_y = i - 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j - 1, i - 1);
+													//check for consecutive jumps
+												}
+											}
+										}
+									}
+								}
+								else if (i == m_currentPiece->m_x + 1 && j == m_currentPiece->m_y + 1 ||
+									i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y + 1)
+								{
+									if (tempBoard[i][j] == VALID)
+									{
+										//move piece and end turn
+										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+										m_currentPiece->m_x = j;
+										m_currentPiece->m_y = i;
+										if (m_currentPiece->m_y == 0)
+										{
+											m_currentPiece->m_type == true;
+										}
+										m_currentPiece = nullptr;
+										m_board->RemoveValidMoves();
+										return &glm::vec4(oldPos.x, oldPos.y, j, i);
+
+									}
+									if (tempBoard[i][j] == BLACK || tempBoard[i][j] == BLACKKING)
+									{
+										//check if you can jump it
+										if (j + 1 < 8)
+										{
+											if (i + 1 < 8 && i + 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i + 1][j + 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j + 1;
+													m_currentPiece->m_y = i + 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j + 1, i + 1);
+													//check for consecutive jumps
+												}
+											}
+											if (i - 1 > 0 && i - 1 != m_currentPiece->m_x)
+											{
+												if (tempBoard[i - 1][j + 1] == VALID)
+												{
+													//move piece and end turn
+													glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+
+													m_currentPiece->m_x = j + 1;
+													m_currentPiece->m_y = i - 1;
+													if (m_currentPiece->m_y == 0)
+													{
+														m_currentPiece->m_type == true;
+													}
+													m_currentPiece = nullptr;
+													m_board->RemoveValidMoves();
+													return &glm::vec4(oldPos.x, oldPos.y, j + 1, i - 1);
+													//check for consecutive jumps
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				}
 				
@@ -101,11 +307,17 @@ glm::vec4* CheckerPlayer::Update(float dt)
 					if (m_pieces[i].m_x == m_cursor.x && m_pieces[i].m_y == m_cursor.y)
 					{
 						m_currentPiece = &m_pieces[i];
+						break;
 					}
 				}
 			}
 		}
 	}
+
+	//if (m_currentPiece != NULL)
+	//{
+	//	m_board->CheckValidMoves(glm::vec2(m_currentPiece->m_x, m_currentPiece->m_y));
+	//}
 
 	m_selectCooldown -= dt;
 	return &glm::vec4(0);
@@ -144,3 +356,9 @@ void CheckerPlayer::SetWindow(GLFWwindow* window)
 {
 	m_window = window;
 }
+
+void CheckerPlayer::SetBoard(CheckerBoard* board)
+{
+	m_board = board;
+}
+
