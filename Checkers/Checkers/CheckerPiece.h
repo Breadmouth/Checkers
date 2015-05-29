@@ -10,4 +10,6 @@ static struct Piece
 	bool m_type = false;
 };
 
-static enum PieceType { EMPTY, WHITE, BLACK, WHITEKING, BLACKKING, VALID };
+static enum PieceType { EMPTY, WHITE, BLACK, WHITEKING, BLACKKING, VALID, SELECTED};
+
+static enum GameState {PLAYER, AI, UNKNOWN};

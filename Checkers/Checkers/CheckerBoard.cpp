@@ -19,10 +19,10 @@ CheckerBoard::CheckerBoard()
 		white = !white;
 	}
 
-	m_board[3][4] = BLACK;
-
 	m_playerTurn = true;
 	m_forceJump = false;
+
+	m_gameState = UNKNOWN;
 }
 
 CheckerBoard::~CheckerBoard()
@@ -39,6 +39,8 @@ void CheckerBoard::Create()
 
 	m_player->SetWindow(glfwGetCurrentContext());
 	m_player->SetBoard(this);
+
+	m_ai->SetBoard(this);
 }
 
 void CheckerBoard::Draw()
@@ -83,6 +85,10 @@ void CheckerBoard::Draw()
 			{
 				Gizmos::addCylinderFilled(glm::vec3((float)i, 0.2, (float)j), 0.4f, 0.1f, 8, glm::vec4(0.2, 0.8, 0.2, 1), &rotate);
 			}
+			else if (m_board[i][j] == SELECTED)
+			{
+				Gizmos::addCylinderFilled(glm::vec3((float)i, 0.2, (float)j), 0.4f, 0.1f, 8, glm::vec4(0.5, 0.5, 0, 1), &rotate);
+			}
 		}
 		white = !white;
 	}
@@ -98,17 +104,6 @@ void CheckerBoard::Update(float dt)
 {
 	m_camera.Update(dt);
 
-	//for (int i = 0; i < 8; ++i)
-	//{
-	//	for (int j = 0; j < 8; ++j)
-	//	{
-	//		if (m_board[i][j] == VALID)
-	//		{
-	//			m_board[i][j] = EMPTY;
-	//		}
-	//	}
-	//}
-
 	if (m_playerTurn)
 	{
 		FindAllPotentialMoves(true);
@@ -116,82 +111,126 @@ void CheckerBoard::Update(float dt)
 		glm::vec4 pieceChange = *m_player->Update(dt);
 		if (!(pieceChange.x == 0 && pieceChange.y == 0))
 		{
-			m_board[(int)pieceChange.x][(int)pieceChange.y] = EMPTY;
-			m_board[(int)pieceChange.z][(int)pieceChange.w] = WHITE;
-			m_playerTurn = false;
+			SimulateGame(pieceChange, WHITE);
+
+			//m_board[(int)pieceChange.x][(int)pieceChange.y] = EMPTY;
+			//m_board[(int)pieceChange.z][(int)pieceChange.w] = WHITE;
+			//if ((int)pieceChange.z - (int)pieceChange.x < -1 || (int)pieceChange.z - (int)pieceChange.x > 1)
+			//{
+			//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == 2)
+			//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y - 1] = EMPTY;
+			//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == -2)
+			//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y + 1] = EMPTY;
+			//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == 2)
+			//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y - 1] = EMPTY;
+			//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == -2)
+			//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y + 1] = EMPTY;
+			//}
+			//m_playerTurn = !m_playerTurn;
+
+			////update ai board state
+			//m_ai->SetBoardState(GetBoardState());
 		}
 	}
 	else
 	{
 		//ai make decision
-		m_playerTurn = !m_playerTurn;
+		FindAllPotentialMoves(false);
+
+		glm::vec4 pieceChange = *m_ai->Update(dt);
+
+		SimulateGame(pieceChange, BLACK);
+
+		//m_board[(int)pieceChange.x][(int)pieceChange.y] = EMPTY;
+		//m_board[(int)pieceChange.z][(int)pieceChange.w] = BLACK;
+		//
+		//if ((int)pieceChange.z - (int)pieceChange.x < -1 || (int)pieceChange.z - (int)pieceChange.x > 1)
+		//{
+		//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == 2)
+		//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y - 1] = EMPTY;
+		//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == -2)
+		//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y + 1] = EMPTY;
+		//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == 2)
+		//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y - 1] = EMPTY;
+		//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == -2)
+		//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y + 1] = EMPTY;
+		//}
+		//m_playerTurn = !m_playerTurn;
+
+		////update player board state
+		//m_player->SetBoardState(GetBoardState());
 	}
 }
 
-void CheckerBoard::CheckValidMoves(glm::vec2 piece)
+GameState CheckerBoard::SimulateGame(glm::vec4 move, PieceType piece)
 {
-	if (m_board[(int)piece.x][(int)piece.y] != EMPTY)
-	{
-		switch (m_board[(int)piece.x][(int)piece.y])
-		{
-		case WHITE:
-		{
-					  for (int i = 0; i < 8; ++i)
-					  {
-						  for (int j = 0; j < 8; ++j)
-						  {
-							  if (i == piece.x + 1 && j == piece.y - 1 ||
-								  i == piece.x - 1 && j == piece.y - 1)
-							  {
-								  if (m_board[i][j] == EMPTY)
-								  {
-									  m_board[i][j] = VALID;
-								  }
-								  if (m_board[i][j] == BLACK || m_board[i][j] == BLACKKING)
-								  {
-									  //check if you can jump it
-									  if (j - 1 >= 0)
-									  {
-										  if (i + 1 < 8 && i + 1 != piece.x)
-										  {
-											  if (m_board[i + 1][j - 1] == EMPTY)
-												  m_board[i + 1][j - 1] = VALID;
-										  }
-										  if (i - 1 > 0 && i - 1 != piece.x)
-										  {
-											  if (m_board[i - 1][j - 1] == EMPTY)
-												  m_board[i - 1][j - 1] = VALID;
-										  }
+	int moveX = (int)move.x;
+	int moveY = (int)move.y;
+	int moveZ = (int)move.z;
+	int moveW = (int)move.w;
 
-									  }
-									  //set forceJump to true
-									  m_forceJump = true;
-								  }
-							  }
-						  }
-					  }
-			break;
-		}
-		case BLACK:
+	m_board[moveX][moveY] = EMPTY;
+	m_board[moveZ][moveW] = piece;
+	if (moveZ - moveX < -1 || moveZ - moveX  > 1)
+	{
+		if (moveX - moveZ == 2 && moveY - moveW == 2)
+			m_board[moveX - 1][moveY - 1] = EMPTY;
+		if (moveX - moveZ == 2 && moveY - moveW == -2)
+			m_board[moveX - 1][moveY + 1] = EMPTY;
+		if (moveX - moveZ == -2 && moveY - moveW == 2)
+			m_board[moveX + 1][moveY - 1] = EMPTY;
+		if (moveX - moveZ == -2 && moveY - moveW == -2)
+			m_board[moveX + 1][moveY + 1] = EMPTY;
+	}
+	m_playerTurn = !m_playerTurn;
+
+	//update board state
+	m_ai->SetBoardState(GetBoardState());
+	m_player->SetBoardState(GetBoardState());
+
+	CheckWinner();
+
+	return GetWinState();
+}
+
+GameState CheckerBoard::GetWinState()
+{
+	return m_gameState;
+}
+
+void CheckerBoard::CheckWinner()
+{
+	int whitecount = 0;
+	int blackcount = 0;
+	for (int i = 0; i < 8; ++i)
+	{
+		for (int j = 0; j < 8; ++j)
 		{
-			break;
-		}
-		case WHITEKING:
-		{
-			break;
-		}
-		case BLACKKING:
-		{
-			break;
-		}
-		default:
-			break;
+			if (m_board[i][j] == WHITE)
+			{
+				whitecount++;
+			}
+			else if (m_board[i][j] == BLACK)
+			{
+				blackcount++;
+			}
 		}
 	}
+	//if no white pieces ai wins
+	if (whitecount == 0)
+		m_gameState = AI;
+	//if no black pieces player wins
+	if (blackcount == 0)
+		m_gameState = PLAYER;
+	//else unkown
+	else
+		m_gameState = UNKNOWN;
 }
 
 void CheckerBoard::FindAllPotentialMoves(bool white)
 {
+	m_forceJump = false;
+
 	if (white) //if the players turn
 	{
 		//look through once to see if there any potential jumps to force the player into
@@ -217,7 +256,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 								  {
 									  if (x + 1 < 8 && x + 1 != i)
 									  {
-										  if (m_board[x + 1][y - 1] == EMPTY)
+										  if (m_board[x + 1][y - 1] == EMPTY || m_board[x + 1][y - 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -225,7 +264,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 									  }
 									  if (x - 1 > 0 && x - 1 != i)
 									  {
-										  if (m_board[x - 1][y - 1] == EMPTY)
+										  if (m_board[x - 1][y - 1] == EMPTY || m_board[x - 1][y - 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -254,7 +293,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 								  {
 									  if (x + 1 < 8 && x + 1 != i)
 									  {
-										  if (m_board[x + 1][y - 1] == EMPTY)
+										  if (m_board[x + 1][y - 1] == EMPTY || m_board[x + 1][y - 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -262,7 +301,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 									  }
 									  if (x - 1 > 0 && x - 1 != i)
 									  {
-										  if (m_board[x - 1][y - 1] == EMPTY)
+										  if (m_board[x - 1][y - 1] == EMPTY || m_board[x - 1][y - 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -281,7 +320,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 								  {
 									  if (x + 1 < 8 && x + 1 != i)
 									  {
-										  if (m_board[x + 1][y + 1] == EMPTY)
+										  if (m_board[x + 1][y + 1] == EMPTY || m_board[x + 1][y + 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -289,7 +328,7 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 									  }
 									  if (x - 1 > 0 && x - 1 != i)
 									  {
-										  if (m_board[x - 1][y + 1] == EMPTY)
+										  if (m_board[x - 1][y + 1] == EMPTY || m_board[x - 1][y + 1] == VALID)
 										  {
 											  m_forceJump = true;
 											  continue;
@@ -426,7 +465,235 @@ void CheckerBoard::FindAllPotentialMoves(bool white)
 	}
 	else //if ai turn
 	{
+		//look through once to see if there any potential jumps to force the player into
+		for (int i = 0; i < 8; ++i)
+		{
+			for (int j = 0; j < 8; ++j)
+			{
+				switch (m_board[i][j])
+				{
+				case BLACK:
+				{
+							  for (int x = 0; x < 8; ++x)
+							  {
+								  for (int y = 0; y < 8; ++y)
+								  {
+									  if (x == i + 1 && y == j + 1 ||
+										  x == i - 1 && y == j + 1)
+									  {
+										  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+										  {
+											  //check if you can jump it
+											  if (y + 1 < 8)
+											  {
+												  if (x + 1 < 8 && x + 1 != i)
+												  {
+													  if (m_board[x + 1][y + 1] == EMPTY || m_board[x + 1][y + 1] == VALID)
+													  {
+														  m_forceJump = true;
+														  continue;
+													  }
+												  }
+												  if (x - 1 > 0 && x - 1 != i)
+												  {
+													  if (m_board[x - 1][y + 1] == EMPTY || m_board[x - 1][y + 1] == VALID)
+													  {
+														  m_forceJump = true;
+														  continue;
+													  }
+												  }
+											  }
+										  }
+									  }
+								  }
+							  }
+							  break;
+				}
+				case BLACKKING:
+				{
+								  for (int x = 0; x < 8; ++x)
+								  {
+									  for (int y = 0; y < 8; ++y)
+									  {
+										  if (x == i + 1 && y == j + 1 ||
+											  x == i - 1 && y == j + 1)
+										  {
+											  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+											  {
+												  //check if you can jump it
+												  if (y + 1 < 8)
+												  {
+													  if (x + 1 < 8 && x + 1 != i)
+													  {
+														  if (m_board[x + 1][y + 1] == EMPTY || m_board[x + 1][y + 1] == VALID)
+														  {
+															  m_forceJump = true;
+															  continue;
+														  }
+													  }
+													  if (x - 1 > 0 && x - 1 != i)
+													  {
+														  if (m_board[x - 1][y + 1] == EMPTY || m_board[x - 1][y + 1] == VALID)
+														  {
+															  m_forceJump = true;
+															  continue;
+														  }
+													  }
+												  }
+											  }
+										  }
+										  else if (x == i + 1 && y == j - 1 ||
+											  x == i - 1 && y == j - 1)
+										  {
+											  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+											  {
+												  //check if you can jump it
+												  if (y - 1 >= 0)
+												  {
+													  if (x + 1 < 8 && x + 1 != i)
+													  {
+														  if (m_board[x + 1][y - 1] == EMPTY || m_board[x + 1][y - 1] == VALID)
+														  {
+															  m_forceJump = true;
+															  continue;
+														  }
+													  }
+													  if (x - 1 > 0 && x - 1 != i)
+													  {
+														  if (m_board[x - 1][y - 1] == EMPTY || m_board[x - 1][y - 1] == VALID)
+														  {
+															  m_forceJump = true;
+															  continue;
+														  }
+													  }
+												  }
+											  }
+										  }
+									  }
+								  }
+								  break;
+				}
+				default:
+					break;
+				}
+			}
+		}
 
+		//look through again and mark valid moves
+		for (int i = 0; i < 8; ++i)
+		{
+			for (int j = 0; j < 8; ++j)
+			{
+				switch (m_board[i][j])
+				{
+				case BLACK:
+				{
+							  for (int x = 0; x < 8; ++x)
+							  {
+								  for (int y = 0; y < 8; ++y)
+								  {
+									  if (x == i + 1 && y == j + 1 ||
+										  x == i - 1 && y == j + 1)
+									  {
+										  if (m_board[x][y] == EMPTY && !m_forceJump)
+										  {
+											  m_board[x][y] = VALID;
+										  }
+										  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+										  {
+											  //check if you can jump it
+											  if (y + 1 < 8)
+											  {
+												  if (x + 1 < 8 && x + 1 != i)
+												  {
+													  if (m_board[x + 1][y + 1] == EMPTY)
+														  m_board[x + 1][y + 1] = VALID;
+													  //---------------------------------------------------check for consecutive jumps
+												  }
+												  if (x - 1 > 0 && x - 1 != i)
+												  {
+													  if (m_board[x - 1][y + 1] == EMPTY)
+														  m_board[x - 1][y + 1] = VALID;
+													  //---------------------------------------------------check for consecutive jumps
+												  }
+											  }
+										  }
+									  }
+								  }
+							  }
+							  break;
+				}
+				case BLACKKING:
+				{
+								  for (int x = 0; x < 8; ++x)
+								  {
+									  for (int y = 0; y < 8; ++y)
+									  {
+										  if (x == i + 1 && y == j - 1 ||
+											  x == i - 1 && y == j - 1)
+										  {
+											  if (m_board[x][y] == EMPTY && !m_forceJump)
+											  {
+												  m_board[x][y] = VALID;
+											  }
+											  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+											  {
+												  //check if you can jump it
+												  if (y - 1 >= 0)
+												  {
+													  if (x + 1 < 8 && x + 1 != i)
+													  {
+														  if (m_board[x + 1][y - 1] == EMPTY)
+															  m_board[x + 1][y - 1] = VALID;
+														  //---------------------------------------------------check for consecutive jumps
+													  }
+													  if (x - 1 > 0 && x - 1 != i)
+													  {
+														  if (m_board[x - 1][y - 1] == EMPTY)
+															  m_board[x - 1][y - 1] = VALID;
+														  //---------------------------------------------------check for consecutive jumps
+													  }
+
+												  }
+											  }
+										  }
+										  else if (x == i + 1 && y == j + 1 ||
+											  x == i - 1 && y == j + 1)
+										  {
+											  if (m_board[x][y] == EMPTY && !m_forceJump)
+											  {
+												  m_board[x][y] = VALID;
+											  }
+											  if (m_board[x][y] == WHITE || m_board[x][y] == WHITEKING)
+											  {
+												  //check if you can jump it
+												  if (y + 1 < 8)
+												  {
+													  if (x + 1 < 8 && x + 1 != i)
+													  {
+														  if (m_board[x + 1][y + 1] == EMPTY)
+															  m_board[x + 1][y + 1] = VALID;
+														  //---------------------------------------------------check for consecutive jumps
+													  }
+													  if (x - 1 > 0 && x - 1 != i)
+													  {
+														  if (m_board[x - 1][y + 1] == EMPTY)
+															  m_board[x - 1][y + 1] = VALID;
+														  //---------------------------------------------------check for consecutive jumps
+													  }
+
+												  }
+											  }
+										  }
+									  }
+								  }
+								  break;
+				}
+				default:
+					break;
+				}
+			}
+		}
 	}
 }
 

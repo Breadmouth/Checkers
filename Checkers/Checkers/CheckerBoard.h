@@ -23,8 +23,13 @@ public:
 	void CheckValidMoves(glm::vec2 piece);
 
 	PieceType** GetBoardState();
+	GameState GetWinState();
+
 	void FindAllPotentialMoves(bool white);
 	void RemoveValidMoves();
+	void CheckWinner();
+
+	GameState SimulateGame(glm::vec4 move, PieceType piece);
 
 	bool GetForceJump();
 
@@ -36,6 +41,8 @@ protected:
 
 	CheckerAI* m_ai;
 	CheckerPlayer* m_player;
+
+	GameState m_gameState;
 
 	bool m_playerTurn;
 	bool m_forceJump;
