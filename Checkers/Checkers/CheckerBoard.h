@@ -24,10 +24,15 @@ public:
 
 	PieceType** GetBoardState();
 	GameState GetWinState();
+	Piece* GetPlayerPieces();
+	Piece* GetAIPieces();
 
 	void FindAllPotentialMoves(bool white);
 	void RemoveValidMoves();
 	void CheckWinner();
+
+	//
+	void SetWinner(bool white);
 
 	GameState SimulateGame(glm::vec4 move, PieceType piece);
 
@@ -39,8 +44,8 @@ protected:
 	PieceType m_board[8][8];
 	PieceType** m_validMoves;
 
-	CheckerAI* m_ai;
-	CheckerPlayer* m_player;
+	CheckerAI m_ai;
+	CheckerPlayer m_player;
 
 	GameState m_gameState;
 

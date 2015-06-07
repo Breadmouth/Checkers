@@ -8,6 +8,25 @@
 CheckerAI::CheckerAI()
 {
 	srand(time(NULL));
+
+	bool second = false;
+	int k = 0;
+	for (int i = 0; i < 3; ++i)
+	{
+		for (int j = 0; j < 8; ++j)
+		{
+			if (second)
+			{
+				m_pieces[k].m_x = j;
+				m_pieces[k].m_y = i;
+				m_pieces[k].m_alive = true;
+				m_pieces[k].m_type = false;
+				k++;
+			}
+			second = !second;
+		}
+		second = !second;
+	}
 }
 
 CheckerAI::~CheckerAI()
@@ -15,9 +34,12 @@ CheckerAI::~CheckerAI()
 
 }
 
-glm::vec4* CheckerAI::Update(float dt)
+void CheckerAI::Update(float dt)
 {
 	PieceType** board = m_board->GetBoardState();
+	/////////////////////////////////////////////////////////////////////figure out double jumps
+	/////////////////////////////////////////////////////////////////////solve logic issue: can't jump to left of board
+	/////////////////////////////////////////////////////////////////////AI possibly can't move to 7,7 or 0,7
 
 	std::vector<float> actionScores;
 
@@ -30,70 +52,87 @@ glm::vec4* CheckerAI::Update(float dt)
 				int value = 0;
 
 				Piece* currentPiece = &m_pieces[0];
+				int currentPiecePos;
 
 				//find piece associated with move
 				for (int x = 0; x < 12; ++x)
 				{
 					if (m_pieces[x].m_type == false)
 					{
-						if (m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1 ||
-							m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)
+						if (((m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1) ||
+							(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
+							m_pieces[x].m_alive == true)
 						{
-							currentPiece = &m_pieces[x];
+							//currentPiece = &m_pieces[x];
+							currentPiecePos = x;
 						}
 
-						if ((board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING)) //////////////////////
+						if (i > 0 && j > 0 && (board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
 						{
-							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2)
+							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								currentPiece = &m_pieces[x];
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
 						}
-						if ((board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+						if (i < 7 && j > 0 && (board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
 						{
-							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2)
+							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								currentPiece = &m_pieces[x];
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
 						}
-						else //a king
+					}
+					else //a king
+					{
+
+						if (((m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j + 1) ||
+							(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j + 1) ||
+							(m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1) ||
+							(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
+							m_pieces[x].m_alive == true)
 						{
+							//currentPiece = &m_pieces[x];
+							currentPiecePos = x;
+						}
 
-							if (m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j + 1 ||
-								m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j + 1 ||
-								m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1 ||
-								m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)
+						if (i > 0 && j > 0 && (board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
+						{
+							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								currentPiece = &m_pieces[x];
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
-
-							if ((board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
+						}
+						if (i < 7 && j > 0 && (board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+						{
+							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2)
-								{
-									currentPiece = &m_pieces[x];
-								}
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
-							if ((board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+						}
+						if (i > 0 && j < 7 && (board[i - 1][j + 1] == WHITE || board[i - 1][j + 1] == WHITEKING))
+						{
+							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j + 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2)
-								{
-									currentPiece = &m_pieces[x];
-								}
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
-							if ((board[i - 1][j + 1] == WHITE || board[i - 1][j + 1] == WHITEKING))
+						}
+						if (i < 7 && j < 7 && (board[i + 1][j + 1] == WHITE || board[i + 1][j + 1] == WHITEKING))
+						{
+							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j + 2 &&
+								m_pieces[x].m_alive == true)
 							{
-								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j + 2)
-								{
-									currentPiece = &m_pieces[x];
-								}
-							}
-							if ((board[i + 1][j + 1] == WHITE || board[i + 1][j + 1] == WHITEKING))
-							{
-								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j + 2)
-								{
-									currentPiece = &m_pieces[x];
-								}
+								//currentPiece = &m_pieces[x];
+								currentPiecePos = x;
 							}
 						}
 					}
@@ -101,10 +140,17 @@ glm::vec4* CheckerAI::Update(float dt)
 				//piece associated with move found
 				//stored in currentPiece
 
-				for (int playout = 0; playout < 20; ++playout)
+				for (int playout = 0; playout < 50; ++playout)
 				{
 					//clone the game
 					CheckerBoard clone = *m_board;
+
+					currentPiece = &clone.GetAIPieces()[currentPiecePos];
+
+					if (j == 7)
+					{
+						currentPiece->m_type == true;
+					}
 
 					PieceType currentPieceType;
 					if (currentPiece->m_type)
@@ -114,14 +160,39 @@ glm::vec4* CheckerAI::Update(float dt)
 
 					//perform action
 					clone.SimulateGame(glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j), currentPieceType);
+					currentPiece->m_x = i;
+					currentPiece->m_y = j;
+					currentPiece->m_alive = true;
+
+					clone.RemoveValidMoves();
 
 					bool playerTurn = true;
+
+					Piece* clonedPieces;
+
 					//while no winner simulate rest of game
-					while (clone.GetWinState() != UNKNOWN)
+					while (clone.GetWinState() == UNKNOWN)
 					{
 						clone.FindAllPotentialMoves(playerTurn);
+						PieceType** cloneBoard = clone.GetBoardState();
 
+						//check if there is a valid move otherwise end game in !currentplayers favour
 						bool boardValid = false;
+						for (int n = 0; n < 8; ++n)
+						{
+							for (int m = 0; m < 8; ++m)
+							{
+								if (cloneBoard[n][m] == VALID)
+									boardValid = true;
+							}
+						}
+						if (!boardValid)
+						{
+							clone.SetWinner(!playerTurn);
+							continue;
+						}
+
+						boardValid = false;
 						int n;
 						int m;
 						while (!boardValid) //choose random valid move
@@ -129,93 +200,111 @@ glm::vec4* CheckerAI::Update(float dt)
 							n = rand() % 8;
 							m = rand() % 8;
 
-							if (board[n][m] == VALID)
+							if (cloneBoard[n][m] == VALID)
 								boardValid = true;
 						}
 
 						PieceType basic;
 						PieceType king;
+						int dir;
 
 						if (playerTurn)
 						{
 							basic = BLACK;
 							king = BLACKKING;
+							clonedPieces = clone.GetPlayerPieces();
+							dir = 1;
 						}
 						else
 						{
 							basic = WHITE;
 							king = WHITEKING;
+							clonedPieces = clone.GetAIPieces();
+							dir = -1;
 						}
 
-						Piece* nextCurrentPiece = &m_pieces[0];
+						Piece* nextCurrentPiece = &clonedPieces[0];
 
 						//find piece associated with move
 						for (int x = 0; x < 12; ++x)
 						{
-							if (m_pieces[x].m_type == false)
+							if (clonedPieces[x].m_type == false)
 							{
-								if (m_pieces[x].m_x == n - 1 && m_pieces[x].m_y == m - 1 ||
-									m_pieces[x].m_x == n + 1 && m_pieces[x].m_y == m - 1)
+								if (((clonedPieces[x].m_x == n - 1 && clonedPieces[x].m_y == m + dir) ||
+									(clonedPieces[x].m_x == n + 1 && clonedPieces[x].m_y == m + dir)) &&
+									clonedPieces[x].m_alive == true)
 								{
-									nextCurrentPiece = &m_pieces[x];
+									nextCurrentPiece = &clonedPieces[x];
 								}
-
-								if ((board[n - 1][m - 1] == basic || board[n - 1][m - 1] == king))
+								if (n > 0 && m > 0 && (cloneBoard[n - 1][m + dir] == basic || cloneBoard[n - 1][m + dir] == king))
 								{
-									if (m_pieces[x].m_x == n - 2 && m_pieces[x].m_y == m - 2)
+									if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m + dir + dir &&
+										clonedPieces[x].m_alive == true)
 									{
-										nextCurrentPiece = &m_pieces[x];
-									}
-								}
-								if ((board[n + 1][m - 1] == basic || board[n + 1][m - 1] == king))
-								{
-									if (m_pieces[x].m_x == n + 2 && m_pieces[x].m_y == m - 2)
-									{
-										nextCurrentPiece = &m_pieces[x];
+										nextCurrentPiece = &clonedPieces[x];
 									}
 								}
-								else //a king
+								if (n < 7 && m > 0 && (cloneBoard[n + 1][m + dir] == basic || cloneBoard[n + 1][m + dir] == king))
 								{
+									if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m + dir + dir &&
+										clonedPieces[x].m_alive == true)
+									{
+										nextCurrentPiece = &clonedPieces[x];
+									}
+								}
+							}
+							else //a king
+							{
 
-									if (m_pieces[x].m_x == n - 1 && m_pieces[x].m_y == m + 1 ||
-										m_pieces[x].m_x == n + 1 && m_pieces[x].m_y == m + 1 ||
-										m_pieces[x].m_x == n - 1 && m_pieces[x].m_y == m - 1 ||
-										m_pieces[x].m_x == n + 1 && m_pieces[x].m_y == m - 1)
-									{
-										currentPiece = &m_pieces[x];
-									}
+								if (((clonedPieces[x].m_x == n - 1 && clonedPieces[x].m_y == m + 1) ||
+									(clonedPieces[x].m_x == n + 1 && clonedPieces[x].m_y == m + 1) ||
+									(clonedPieces[x].m_x == n - 1 && clonedPieces[x].m_y == m - 1) ||
+									(clonedPieces[x].m_x == n + 1 && clonedPieces[x].m_y == m - 1)) &&
+									clonedPieces[x].m_alive == true)
+								{
+									nextCurrentPiece = &clonedPieces[x];
+								}
 
-									if ((board[n - 1][m - 1] == basic || board[n - 1][m - 1] == king))
+								if (n > 0 && m > 0 && (cloneBoard[n - 1][m - 1] == basic || cloneBoard[n - 1][m - 1] == king))
+								{
+									if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m - 2 &&
+										clonedPieces[x].m_alive == true)
 									{
-										if (m_pieces[x].m_x == n - 2 && m_pieces[x].m_y == m - 2)
-										{
-											nextCurrentPiece = &m_pieces[x];
-										}
+										nextCurrentPiece = &clonedPieces[x];
 									}
-									if ((board[n + 1][m - 1] == basic || board[n + 1][m - 1] == king))
+								}
+								if (n < 7 && m > 0 && (cloneBoard[n + 1][m - 1] == basic || cloneBoard[n + 1][m - 1] == king))
+								{
+									if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m - 2 &&
+										clonedPieces[x].m_alive == true)
 									{
-										if (m_pieces[x].m_x == n + 2 && m_pieces[x].m_y == m - 2)
-										{
-											nextCurrentPiece = &m_pieces[x];
-										}
+										nextCurrentPiece = &clonedPieces[x];
 									}
-									if ((board[n - 1][m + 1] == basic || board[n - 1][m + 1] == king))
+								}
+								if (n > 0 && m < 7 && (cloneBoard[n - 1][m + 1] == basic || cloneBoard[n - 1][m + 1] == king))
+								{
+									if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m + 2 &&
+										clonedPieces[x].m_alive == true)
 									{
-										if (m_pieces[x].m_x == n - 2 && m_pieces[x].m_y == m + 2)
-										{
-											nextCurrentPiece = &m_pieces[x];
-										}
+										nextCurrentPiece = &clonedPieces[x];
 									}
-									if ((board[n + 1][m + 1] == basic || board[n + 1][m + 1] == king))
+								}
+								if (n < 7 && m < 7 && (cloneBoard[n + 1][m + 1] == basic || cloneBoard[n + 1][m + 1] == king))
+								{
+									if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m + 2 &&
+										clonedPieces[x].m_alive == true)
 									{
-										if (m_pieces[x].m_x == n + 2 && m_pieces[x].m_y == m + 2)
-										{
-											nextCurrentPiece = &m_pieces[x];
-										}
+										nextCurrentPiece = &clonedPieces[x];
 									}
 								}
 							}
 						}
+
+						if (m == 7 || m == 0)
+						{
+							nextCurrentPiece->m_type = true;
+						}
+
 						PieceType nextCurrentPieceType;
 
 						if (playerTurn)
@@ -235,13 +324,21 @@ glm::vec4* CheckerAI::Update(float dt)
 
 						//perform move
 						clone.SimulateGame(glm::vec4(nextCurrentPiece->m_x, nextCurrentPiece->m_y, n, m), nextCurrentPieceType);
+						nextCurrentPiece->m_x = n;
+						nextCurrentPiece->m_y = m;
+						nextCurrentPiece->m_alive = true;
 
-						clone.CheckWinner();
+						//clone.CheckWinner();
 
 						playerTurn = !playerTurn;
 
 						clone.RemoveValidMoves();
 
+						//clean up memory
+						for (int n = 0; n < 8; ++n)
+						{
+							delete cloneBoard[n];
+						}
 					}
 
 					//if win +1 to value
@@ -253,8 +350,6 @@ glm::vec4* CheckerAI::Update(float dt)
 					{
 						value--;
 					}
-
-					//delete clone
 
 				}
 				//push action score into vector
@@ -294,72 +389,184 @@ glm::vec4* CheckerAI::Update(float dt)
 					{
 						if (m_pieces[x].m_type == false)
 						{
-							if (m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1 ||
-								m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)
+							if (((m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1) ||
+								(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
+								m_pieces[x].m_alive == true)
 							{
 								currentPiece = &m_pieces[x];
-								return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+								if (j == 7 || j == 0)
+								{
+									currentPiece->m_type = true;
+								}
+								PieceType currentPieceType;
+								if (currentPiece->m_type)
+									currentPieceType = BLACKKING;
+								else
+									currentPieceType = BLACK;
+								glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+								currentPiece->m_x = i;
+								currentPiece->m_y = j;
+								m_board->SimulateGame(move, currentPieceType);
+								return;
 							}
 
-							if ((board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
+							if (i > 0 && j > 0 && (board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
 							{
-								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2)
+								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
+									m_pieces[x].m_alive == true)
 								{
 									currentPiece = &m_pieces[x];
-									return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									if (j == 7 || j == 0)
+									{
+										currentPiece->m_type = true;
+									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
 							}
-							if ((board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+							if (i < 7 && j > 0 && (board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
 							{
-								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2)
+								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
+									m_pieces[x].m_alive == true)
 								{
 									currentPiece = &m_pieces[x];
-									return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									if (j == 7 || j == 0)
+									{
+										currentPiece->m_type = true;
+									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
 							}
-							else //a king
-							{
+						}
+						else //a king
+						{
 
-								if (m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j + 1 ||
-									m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j + 1 ||
-									m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1 ||
-									m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)
+							if (((m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j + 1) ||
+								(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j + 1) ||
+								(m_pieces[x].m_x == i - 1 && m_pieces[x].m_y == j - 1) ||
+								(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
+								m_pieces[x].m_alive == true)
+							{
+								currentPiece = &m_pieces[x];
+								if (j == 7 || j == 0)
+								{
+									currentPiece->m_type = true;
+								}
+								PieceType currentPieceType;
+								if (currentPiece->m_type)
+									currentPieceType = BLACKKING;
+								else
+									currentPieceType = BLACK;
+								glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+								currentPiece->m_x = i;
+								currentPiece->m_y = j;
+								m_board->SimulateGame(move, currentPieceType);
+								return;
+							}
+
+							if (i > 0 && j > 0 && (board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
+							{
+								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
+									m_pieces[x].m_alive == true)
 								{
 									currentPiece = &m_pieces[x];
-									return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
-								}
-
-								if ((board[i - 1][j - 1] == WHITE || board[i - 1][j - 1] == WHITEKING))
-								{
-									if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2)
+									if (j == 7 || j == 0)
 									{
-										currentPiece = &m_pieces[x];
-										return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+										currentPiece->m_type = true;
 									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
-								if ((board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+							}
+							if (i < 7 && j > 0 && (board[i + 1][j - 1] == WHITE || board[i + 1][j - 1] == WHITEKING))
+							{
+								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
+									m_pieces[x].m_alive == true)
 								{
-									if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2)
+									currentPiece = &m_pieces[x];
+									if (j == 7 || j == 0)
 									{
-										currentPiece = &m_pieces[x];
-										return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+										currentPiece->m_type = true;
 									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
-								if ((board[i - 1][j + 1] == WHITE || board[i - 1][j + 1] == WHITEKING))
+							}
+							if (i > 0 && j < 7 && (board[i - 1][j + 1] == WHITE || board[i - 1][j + 1] == WHITEKING))
+							{
+								if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j + 2 &&
+									m_pieces[x].m_alive == true)
 								{
-									if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j + 2)
+									currentPiece = &m_pieces[x];
+									if (j == 7 || j == 0)
 									{
-										currentPiece = &m_pieces[x];
-										return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+										currentPiece->m_type = true;
 									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
-								if ((board[i + 1][j + 1] == WHITE || board[i + 1][j + 1] == WHITEKING))
+							}
+							if (i < 7 && j < 7 && (board[i + 1][j + 1] == WHITE || board[i + 1][j + 1] == WHITEKING))
+							{
+								if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j + 2 &&
+									m_pieces[x].m_alive == true)
 								{
-									if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j + 2)
+									currentPiece = &m_pieces[x];
+									if (j == 7 || j == 0)
 									{
-										currentPiece = &m_pieces[x];
-										return &glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+										currentPiece->m_type = true;
 									}
+									PieceType currentPieceType;
+									if (currentPiece->m_type)
+										currentPieceType = BLACKKING;
+									else
+										currentPieceType = BLACK;
+									glm::vec4 move = glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j);
+									currentPiece->m_x = i;
+									currentPiece->m_y = j;
+									m_board->SimulateGame(move, currentPieceType);
+									return;
 								}
 							}
 						}
@@ -370,7 +577,12 @@ glm::vec4* CheckerAI::Update(float dt)
 		}
 	}
 
-	return &glm::vec4(0);
+	return;
+}
+
+Piece* CheckerAI::GetPieces()
+{
+	return &m_pieces[0];
 }
 
 Piece* CheckerAI::GetPiece(int i)

@@ -13,13 +13,14 @@ public:
 	CheckerPlayer();
 	~CheckerPlayer();
 
-	glm::vec4* Update(float dt);
+	void Update(float dt);
 
 	void SetWindow(GLFWwindow* window);
 	void SetBoard(CheckerBoard* board);
 
 	Piece* GetPieceAtPos(int x, int y);
 	Piece* GetPiece(int i);
+	Piece* GetPieces();
 
 	glm::vec2* GetCursorPos();
 

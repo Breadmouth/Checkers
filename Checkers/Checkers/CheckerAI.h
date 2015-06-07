@@ -13,10 +13,11 @@ public:
 	CheckerAI();
 	~CheckerAI();
 
-	glm::vec4* Update(float dt);
+	void Update(float dt);
 
 	Piece* GetPieceAtPos(int x, int y);
 	Piece* GetPiece(int i);
+	Piece* GetPieces();
 
 	void SetBoard(CheckerBoard* board);
 

@@ -34,13 +34,13 @@ void CheckerBoard::Create()
 {
 	m_camera.SetInputWindow(glfwGetCurrentContext());
 
-	m_ai = new CheckerAI();
-	m_player = new CheckerPlayer();
+	//m_ai = new CheckerAI();
+	//m_player = new CheckerPlayer();
 
-	m_player->SetWindow(glfwGetCurrentContext());
-	m_player->SetBoard(this);
+	m_player.SetWindow(glfwGetCurrentContext());
+	m_player.SetBoard(this);
 
-	m_ai->SetBoard(this);
+	m_ai.SetBoard(this);
 }
 
 void CheckerBoard::Draw()
@@ -93,7 +93,7 @@ void CheckerBoard::Draw()
 		white = !white;
 	}
 
-	glm::vec2 cursor = *m_player->GetCursorPos();
+	glm::vec2 cursor = *m_player.GetCursorPos();
 	Gizmos::addSphere(vec3(cursor.x, 1.f, cursor.y), 0.2f, 10, 10, vec4(0, 0, 1, 1));
 
 	Gizmos::draw(m_camera.GetProjectionView());
@@ -108,58 +108,30 @@ void CheckerBoard::Update(float dt)
 	{
 		FindAllPotentialMoves(true);
 		//wait for player input
-		glm::vec4 pieceChange = *m_player->Update(dt);
-		if (!(pieceChange.x == 0 && pieceChange.y == 0))
-		{
-			SimulateGame(pieceChange, WHITE);
+		m_player.Update(dt);
+		if (!m_playerTurn)
+			RemoveValidMoves();
 
-			//m_board[(int)pieceChange.x][(int)pieceChange.y] = EMPTY;
-			//m_board[(int)pieceChange.z][(int)pieceChange.w] = WHITE;
-			//if ((int)pieceChange.z - (int)pieceChange.x < -1 || (int)pieceChange.z - (int)pieceChange.x > 1)
-			//{
-			//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == 2)
-			//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y - 1] = EMPTY;
-			//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == -2)
-			//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y + 1] = EMPTY;
-			//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == 2)
-			//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y - 1] = EMPTY;
-			//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == -2)
-			//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y + 1] = EMPTY;
-			//}
-			//m_playerTurn = !m_playerTurn;
-
-			////update ai board state
-			//m_ai->SetBoardState(GetBoardState());
-		}
 	}
 	else
 	{
 		//ai make decision
 		FindAllPotentialMoves(false);
 
-		glm::vec4 pieceChange = *m_ai->Update(dt);
+		m_ai.Update(dt);
 
-		SimulateGame(pieceChange, BLACK);
-
-		//m_board[(int)pieceChange.x][(int)pieceChange.y] = EMPTY;
-		//m_board[(int)pieceChange.z][(int)pieceChange.w] = BLACK;
-		//
-		//if ((int)pieceChange.z - (int)pieceChange.x < -1 || (int)pieceChange.z - (int)pieceChange.x > 1)
-		//{
-		//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == 2)
-		//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y - 1] = EMPTY;
-		//	if ((int)pieceChange.x - (int)pieceChange.z == 2 && (int)pieceChange.y - (int)pieceChange.w == -2)
-		//		m_board[(int)pieceChange.x - 1][(int)pieceChange.y + 1] = EMPTY;
-		//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == 2)
-		//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y - 1] = EMPTY;
-		//	if ((int)pieceChange.x - (int)pieceChange.z == -2 && (int)pieceChange.y - (int)pieceChange.w == -2)
-		//		m_board[(int)pieceChange.x + 1][(int)pieceChange.y + 1] = EMPTY;
-		//}
-		//m_playerTurn = !m_playerTurn;
-
-		////update player board state
-		//m_player->SetBoardState(GetBoardState());
+		RemoveValidMoves();
+		if (m_playerTurn)
+			RemoveValidMoves();
 	}
+}
+
+void CheckerBoard::SetWinner(bool white)
+{
+	if (white)
+		m_gameState = PLAYER;
+	else
+		m_gameState = AI;
 }
 
 GameState CheckerBoard::SimulateGame(glm::vec4 move, PieceType piece)
@@ -185,8 +157,8 @@ GameState CheckerBoard::SimulateGame(glm::vec4 move, PieceType piece)
 	m_playerTurn = !m_playerTurn;
 
 	//update board state
-	m_ai->SetBoardState(GetBoardState());
-	m_player->SetBoardState(GetBoardState());
+	m_ai.SetBoardState(GetBoardState());
+	m_player.SetBoardState(GetBoardState());
 
 	CheckWinner();
 
@@ -206,11 +178,11 @@ void CheckerBoard::CheckWinner()
 	{
 		for (int j = 0; j < 8; ++j)
 		{
-			if (m_board[i][j] == WHITE)
+			if (m_board[i][j] == WHITE || m_board[i][j] == WHITEKING)
 			{
 				whitecount++;
 			}
-			else if (m_board[i][j] == BLACK)
+			else if (m_board[i][j] == BLACK || m_board[i][j] == BLACKKING)
 			{
 				blackcount++;
 			}
@@ -218,13 +190,18 @@ void CheckerBoard::CheckWinner()
 	}
 	//if no white pieces ai wins
 	if (whitecount == 0)
+	{
 		m_gameState = AI;
+		return;
+	}
 	//if no black pieces player wins
 	if (blackcount == 0)
+	{
 		m_gameState = PLAYER;
+		return;
+	}
 	//else unkown
-	else
-		m_gameState = UNKNOWN;
+	m_gameState = UNKNOWN;
 }
 
 void CheckerBoard::FindAllPotentialMoves(bool white)
@@ -729,6 +706,16 @@ void CheckerBoard::RemoveValidMoves()
 			}
 		}
 	}
+}
+
+Piece* CheckerBoard::GetPlayerPieces()
+{
+	return m_player.GetPieces();
+}
+
+Piece* CheckerBoard::GetAIPieces()
+{
+	return m_ai.GetPieces();
 }
 
 void CheckerBoard::Destroy()

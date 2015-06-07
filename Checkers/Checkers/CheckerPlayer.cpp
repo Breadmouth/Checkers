@@ -17,6 +17,8 @@ CheckerPlayer::CheckerPlayer()
 			{
 				m_pieces[k].m_x = j;
 				m_pieces[k].m_y = i;
+				m_pieces[k].m_alive = true;
+				m_pieces[k].m_type = false;
 				k++;
 			}
 			second = !second;
@@ -33,7 +35,7 @@ CheckerPlayer::~CheckerPlayer()
 }
 
 //player needs to know about enemy pieces to check for jumps
-glm::vec4* CheckerPlayer::Update(float dt)
+void CheckerPlayer::Update(float dt)
 {
 	if (m_selectCooldown < 0.0f)
 	{
@@ -72,10 +74,10 @@ glm::vec4* CheckerPlayer::Update(float dt)
 			{
 				for (int i = 0; i < 12; ++i)
 				{
-					if (m_pieces[i].m_x == m_cursor.x && m_pieces[i].m_y == m_cursor.y)
+					if (m_pieces[i].m_x == m_cursor.x && m_pieces[i].m_y == m_cursor.y && m_pieces[i].m_alive == true)
 					{
 						m_currentPiece = &m_pieces[i];
-						return &glm::vec4(0);
+						return;
 					}
 				}
 
@@ -93,33 +95,47 @@ glm::vec4* CheckerPlayer::Update(float dt)
 										i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y - 1)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 									}
 									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 ||
 										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+										
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 										//check for consecutive jumps
 									}
 								}
@@ -141,67 +157,95 @@ glm::vec4* CheckerPlayer::Update(float dt)
 										i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y - 1)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 									}
 									if (i == m_currentPiece->m_x + 1 && j == m_currentPiece->m_y + 1 ||
 										i == m_currentPiece->m_x - 1 && j == m_currentPiece->m_y + 1)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 									}
 
 									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 ||
 										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 										//check for consecutive jumps
 									}
 									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y + 2 ||
 										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y + 2)
 									{
 										//move piece and end turn
-										glm::vec2 oldPos(m_currentPiece->m_x, m_currentPiece->m_y);
+										if (j == 0)
+										{
+											m_currentPiece->m_type = true;
+										}
 
+										PieceType currentPieceType;
+										if (m_currentPiece->m_type)
+											currentPieceType = WHITEKING;
+										else
+											currentPieceType = WHITE;
+
+										glm::vec4 move = glm::vec4(m_currentPiece->m_x, m_currentPiece->m_y, i, j);
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
-										if (m_currentPiece->m_y == 0)
-										{
-											m_currentPiece->m_type == true;
-										}
+										m_board->SimulateGame(move, currentPieceType);
 										m_currentPiece = nullptr;
-										m_board->RemoveValidMoves();
-										return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+										return;
 										//check for consecutive jumps
 									}
 								}
@@ -231,7 +275,7 @@ glm::vec4* CheckerPlayer::Update(float dt)
 	//}
 
 	m_selectCooldown -= dt;
-	return &glm::vec4(0);
+	return;
 }
 
 void CheckerPlayer::SetBoardState(PieceType** currentState)
@@ -291,3 +335,7 @@ void CheckerPlayer::SetBoard(CheckerBoard* board)
 	m_board = board;
 }
 
+Piece* CheckerPlayer::GetPieces()
+{
+	return &m_pieces[0];
+}
