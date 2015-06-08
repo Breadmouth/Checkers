@@ -37,9 +37,22 @@ CheckerAI::~CheckerAI()
 void CheckerAI::Update(float dt)
 {
 	PieceType** board = m_board->GetBoardState();
-	/////////////////////////////////////////////////////////////////////figure out double jumps
-	/////////////////////////////////////////////////////////////////////solve logic issue: can't jump to left of board
-	/////////////////////////////////////////////////////////////////////AI possibly can't move to 7,7 or 0,7
+	/////////////////////////////////////////////////////////////////////stil possible infinite loop + crash via memory leak
+	/////////////////////////////////////////////////////////AI may not be considering double jumps properly
+
+	bool validMove = false;
+	for (int n = 0; n < 8; ++n)
+	{
+		for (int m = 0; m < 8; ++m)
+		{
+			if (board[n][m] == VALID)
+				validMove = true;
+		}
+	}
+	if (!validMove)
+	{
+		return;
+	}
 
 	std::vector<float> actionScores;
 
@@ -63,7 +76,6 @@ void CheckerAI::Update(float dt)
 							(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
 							m_pieces[x].m_alive == true)
 						{
-							//currentPiece = &m_pieces[x];
 							currentPiecePos = x;
 						}
 
@@ -72,7 +84,6 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
@@ -81,7 +92,6 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
@@ -95,7 +105,6 @@ void CheckerAI::Update(float dt)
 							(m_pieces[x].m_x == i + 1 && m_pieces[x].m_y == j - 1)) &&
 							m_pieces[x].m_alive == true)
 						{
-							//currentPiece = &m_pieces[x];
 							currentPiecePos = x;
 						}
 
@@ -104,7 +113,6 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j - 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
@@ -113,7 +121,6 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j - 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
@@ -122,7 +129,6 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i - 2 && m_pieces[x].m_y == j + 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
@@ -131,14 +137,11 @@ void CheckerAI::Update(float dt)
 							if (m_pieces[x].m_x == i + 2 && m_pieces[x].m_y == j + 2 &&
 								m_pieces[x].m_alive == true)
 							{
-								//currentPiece = &m_pieces[x];
 								currentPiecePos = x;
 							}
 						}
 					}
 				}
-				//piece associated with move found
-				//stored in currentPiece
 
 				for (int playout = 0; playout < 50; ++playout)
 				{
@@ -158,22 +161,44 @@ void CheckerAI::Update(float dt)
 					else
 						currentPieceType = BLACK;
 
+					if (currentPiece->m_x - i > 1 ||
+						currentPiece->m_y - i < -1)
+					{
+						clone.SetMultipleJumper(currentPiece);
+					}
+
 					//perform action
 					clone.SimulateGame(glm::vec4(currentPiece->m_x, currentPiece->m_y, i, j), currentPieceType);
 					currentPiece->m_x = i;
 					currentPiece->m_y = j;
 					currentPiece->m_alive = true;
 
+					clone.SetMoveMade(true);
+
 					clone.RemoveValidMoves();
 
-					bool playerTurn = true;
+					bool playerTurn = clone.GetPlayerTurn();
 
 					Piece* clonedPieces;
 
 					//while no winner simulate rest of game
 					while (clone.GetWinState() == UNKNOWN)
 					{
+						if (!clone.GetMultipleJumper() && clone.GetMoveMade())
+						{
+							clone.SwitchTurn();
+							clone.SetMoveMade(false);
+						}
+
+						playerTurn = clone.GetPlayerTurn();
+
 						clone.FindAllPotentialMoves(playerTurn);
+
+						if (!clone.GetMultipleJumper() && clone.GetMoveMade())
+						{
+							continue;
+						}
+
 						PieceType** cloneBoard = clone.GetBoardState();
 
 						//check if there is a valid move otherwise end game in !currentplayers favour
@@ -322,15 +347,19 @@ void CheckerAI::Update(float dt)
 								nextCurrentPieceType = BLACK;
 						}
 
+						if (nextCurrentPiece->m_x - n < -1 ||
+							nextCurrentPiece->m_y - n > 1)
+						{
+							clone.SetMultipleJumper(nextCurrentPiece);
+						}
+
 						//perform move
 						clone.SimulateGame(glm::vec4(nextCurrentPiece->m_x, nextCurrentPiece->m_y, n, m), nextCurrentPieceType);
 						nextCurrentPiece->m_x = n;
 						nextCurrentPiece->m_y = m;
 						nextCurrentPiece->m_alive = true;
 
-						//clone.CheckWinner();
-
-						playerTurn = !playerTurn;
+						clone.SetMoveMade(true);
 
 						clone.RemoveValidMoves();
 
@@ -407,6 +436,8 @@ void CheckerAI::Update(float dt)
 								currentPiece->m_x = i;
 								currentPiece->m_y = j;
 								m_board->SimulateGame(move, currentPieceType);
+
+								m_board->SetMoveMade(true);
 								return;
 							}
 
@@ -429,6 +460,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}
@@ -451,6 +486,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}
@@ -478,6 +517,8 @@ void CheckerAI::Update(float dt)
 								currentPiece->m_x = i;
 								currentPiece->m_y = j;
 								m_board->SimulateGame(move, currentPieceType);
+
+								m_board->SetMoveMade(true);
 								return;
 							}
 
@@ -500,6 +541,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}
@@ -522,6 +567,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}
@@ -544,6 +593,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}
@@ -566,6 +619,10 @@ void CheckerAI::Update(float dt)
 									currentPiece->m_x = i;
 									currentPiece->m_y = j;
 									m_board->SimulateGame(move, currentPieceType);
+
+									m_board->SetMultipleJumper(currentPiece);
+
+									m_board->SetMoveMade(true);
 									return;
 								}
 							}

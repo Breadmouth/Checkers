@@ -26,15 +26,23 @@ public:
 	GameState GetWinState();
 	Piece* GetPlayerPieces();
 	Piece* GetAIPieces();
+	bool GetPlayerTurn();
+	bool GetMoveMade();
+	//true means multiple jumper exists, false means otherwise
+	bool GetMultipleJumper();
 
 	void FindAllPotentialMoves(bool white);
 	void RemoveValidMoves();
 	void CheckWinner();
 
 	//
+	void SetMultipleJumper(Piece* multipleJumper);
 	void SetWinner(bool white);
+	void SetMoveMade(bool moveMade);
 
 	GameState SimulateGame(glm::vec4 move, PieceType piece);
+
+	void SwitchTurn();
 
 	bool GetForceJump();
 
@@ -49,6 +57,9 @@ protected:
 
 	GameState m_gameState;
 
+	Piece* m_multipleJumper;
+
 	bool m_playerTurn;
+	bool m_moveMade;
 	bool m_forceJump;
 };

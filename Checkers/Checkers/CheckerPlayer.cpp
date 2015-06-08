@@ -110,8 +110,10 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
 									}
 									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 ||
@@ -133,10 +135,13 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
+										m_board->SetMultipleJumper(m_currentPiece);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
-										//check for consecutive jumps
 									}
 								}
 							}
@@ -172,8 +177,10 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
 									}
 									if (i == m_currentPiece->m_x + 1 && j == m_currentPiece->m_y + 1 ||
@@ -195,8 +202,10 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
 									}
 
@@ -219,10 +228,13 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
+										m_board->SetMultipleJumper(m_currentPiece);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
-										//check for consecutive jumps
 									}
 									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y + 2 ||
 										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y + 2)
@@ -243,10 +255,13 @@ void CheckerPlayer::Update(float dt)
 										m_currentPiece->m_x = i;
 										m_currentPiece->m_y = j;
 										m_board->SimulateGame(move, currentPieceType);
+
+										m_board->SetMultipleJumper(m_currentPiece);
+
 										m_currentPiece = nullptr;
-										//return &glm::vec4(oldPos.x, oldPos.y, i, j);
+
+										m_board->SetMoveMade(true);
 										return;
-										//check for consecutive jumps
 									}
 								}
 							}
