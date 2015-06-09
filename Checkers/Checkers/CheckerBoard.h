@@ -46,6 +46,8 @@ public:
 
 	bool GetForceJump();
 
+	void Reset();
+
 protected:
 	FlyCamera m_camera;
 

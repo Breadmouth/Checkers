@@ -9,6 +9,11 @@ CheckerAI::CheckerAI()
 {
 	srand(time(NULL));
 
+	Reset();
+}
+
+void CheckerAI::Reset()
+{
 	bool second = false;
 	int k = 0;
 	for (int i = 0; i < 3; ++i)
@@ -37,8 +42,6 @@ CheckerAI::~CheckerAI()
 void CheckerAI::Update(float dt)
 {
 	PieceType** board = m_board->GetBoardState();
-	/////////////////////////////////////////////////////////////////////stil possible infinite loop + crash via memory leak
-	/////////////////////////////////////////////////////////AI may not be considering double jumps properly
 
 	bool validMove = false;
 	for (int n = 0; n < 8; ++n)
@@ -51,6 +54,7 @@ void CheckerAI::Update(float dt)
 	}
 	if (!validMove)
 	{
+		m_board->SetWinner(true);
 		return;
 	}
 
@@ -143,7 +147,7 @@ void CheckerAI::Update(float dt)
 					}
 				}
 
-				for (int playout = 0; playout < 50; ++playout)
+				for (int playout = 0; playout < 100; ++playout)
 				{
 					//clone the game
 					CheckerBoard clone = *m_board;
@@ -203,11 +207,11 @@ void CheckerAI::Update(float dt)
 
 						//check if there is a valid move otherwise end game in !currentplayers favour
 						bool boardValid = false;
-						for (int n = 0; n < 8; ++n)
+						for (int v = 0; v < 8; ++v)
 						{
-							for (int m = 0; m < 8; ++m)
+							for (int b = 0; b < 8; ++b)
 							{
-								if (cloneBoard[n][m] == VALID)
+								if (cloneBoard[v][b] == VALID)
 									boardValid = true;
 							}
 						}
@@ -222,8 +226,8 @@ void CheckerAI::Update(float dt)
 						int m;
 						while (!boardValid) //choose random valid move
 						{
-							n = rand() % 8;
-							m = rand() % 8;
+							n = (int)(rand() % 8);
+							m = (int)(rand() % 8);
 
 							if (cloneBoard[n][m] == VALID)
 								boardValid = true;
@@ -261,20 +265,42 @@ void CheckerAI::Update(float dt)
 								{
 									nextCurrentPiece = &clonedPieces[x];
 								}
-								if (n > 0 && m > 0 && (cloneBoard[n - 1][m + dir] == basic || cloneBoard[n - 1][m + dir] == king))
+								if (!playerTurn)
 								{
-									if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m + dir + dir &&
-										clonedPieces[x].m_alive == true)
+									if (n > 0 && m > 0 && (cloneBoard[n - 1][m + dir] == basic || cloneBoard[n - 1][m + dir] == king))
 									{
-										nextCurrentPiece = &clonedPieces[x];
+										if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m + dir + dir &&
+											clonedPieces[x].m_alive == true)
+										{
+											nextCurrentPiece = &clonedPieces[x];
+										}
+									}
+									if (n < 7 && m > 0 && (cloneBoard[n + 1][m + dir] == basic || cloneBoard[n + 1][m + dir] == king))
+									{
+										if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m + dir + dir &&
+											clonedPieces[x].m_alive == true)
+										{
+											nextCurrentPiece = &clonedPieces[x];
+										}
 									}
 								}
-								if (n < 7 && m > 0 && (cloneBoard[n + 1][m + dir] == basic || cloneBoard[n + 1][m + dir] == king))
+								else
 								{
-									if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m + dir + dir &&
-										clonedPieces[x].m_alive == true)
+									if (n > 0 && m < 7 && (cloneBoard[n - 1][m + dir] == basic || cloneBoard[n - 1][m + dir] == king))
 									{
-										nextCurrentPiece = &clonedPieces[x];
+										if (clonedPieces[x].m_x == n - 2 && clonedPieces[x].m_y == m + dir + dir &&
+											clonedPieces[x].m_alive == true)
+										{
+											nextCurrentPiece = &clonedPieces[x];
+										}
+									}
+									if (n < 7 && m < 7 && (cloneBoard[n + 1][m + dir] == basic || cloneBoard[n + 1][m + dir] == king))
+									{
+										if (clonedPieces[x].m_x == n + 2 && clonedPieces[x].m_y == m + dir + dir &&
+											clonedPieces[x].m_alive == true)
+										{
+											nextCurrentPiece = &clonedPieces[x];
+										}
 									}
 								}
 							}

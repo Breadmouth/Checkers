@@ -2,7 +2,7 @@
 
 FlyCamera::FlyCamera()
 {
-	viewTransform = glm::lookAt(vec3(10,10,10), vec3(0), vec3(0,1,0));
+	viewTransform = glm::lookAt(vec3(3.5f,10,10), vec3(3.5f, 0, 3.5f), vec3(0,1,0));
 	worldTransform = glm::inverse(viewTransform);
 	SetPerspective(glm::pi<float>() * 0.25f, 16/9.f, 0.1f, 10000.f);
 

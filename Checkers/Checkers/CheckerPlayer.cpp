@@ -7,6 +7,11 @@ CheckerPlayer::CheckerPlayer()
 	m_cursor.x = 0;
 	m_cursor.y = 0;
 
+	Reset();
+}
+
+void CheckerPlayer::Reset()
+{
 	bool second = true;
 	int k = 0;
 	for (int i = 5; i < 8; ++i)
@@ -116,8 +121,12 @@ void CheckerPlayer::Update(float dt)
 										m_board->SetMoveMade(true);
 										return;
 									}
-									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 ||
-										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2)
+									if ((i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 && 
+									   (tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y - 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y - 1] == BLACKKING)) ||
+									   (i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2  &&
+									   (tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y - 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y - 1] == BLACKKING)))
 									{
 										//move piece and end turn
 										if (j == 0)
@@ -209,8 +218,12 @@ void CheckerPlayer::Update(float dt)
 										return;
 									}
 
-									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 ||
-										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2)
+									if ((i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y - 2 &&
+										(tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y - 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y - 1] == BLACKKING)) ||
+										(i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y - 2 &&
+										(tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y - 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y - 1] == BLACKKING)))
 									{
 										//move piece and end turn
 										if (j == 0)
@@ -236,8 +249,12 @@ void CheckerPlayer::Update(float dt)
 										m_board->SetMoveMade(true);
 										return;
 									}
-									if (i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y + 2 ||
-										i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y + 2)
+									if ((i == m_currentPiece->m_x + 2 && j == m_currentPiece->m_y + 2 &&
+										(tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y + 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x + 1][m_currentPiece->m_y + 1] == BLACKKING)) ||
+										(i == m_currentPiece->m_x - 2 && j == m_currentPiece->m_y + 2 &&
+										(tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y + 1] == BLACK ||
+										tempBoard[m_currentPiece->m_x - 1][m_currentPiece->m_y + 1] == BLACKKING)))
 									{
 										//move piece and end turn
 										if (j == 0)
@@ -283,11 +300,6 @@ void CheckerPlayer::Update(float dt)
 			}
 		}
 	}
-
-	//if (m_currentPiece != NULL)
-	//{
-	//	m_board->CheckValidMoves(glm::vec2(m_currentPiece->m_x, m_currentPiece->m_y));
-	//}
 
 	m_selectCooldown -= dt;
 	return;

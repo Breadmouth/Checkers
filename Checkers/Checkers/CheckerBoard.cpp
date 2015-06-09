@@ -1,6 +1,12 @@
 #include "CheckerBoard.h"
+#include <iostream>
 
 CheckerBoard::CheckerBoard()
+{
+	Reset();
+}
+
+void CheckerBoard::Reset()
 {
 	bool white = true;
 	for (int i = 0; i < 8; ++i)
@@ -21,9 +27,13 @@ CheckerBoard::CheckerBoard()
 
 	m_playerTurn = true;
 	m_forceJump = false;
+	m_moveMade = false;
 	m_multipleJumper = nullptr;
 
 	m_gameState = UNKNOWN;
+
+	m_player.Reset();
+	m_ai.Reset();
 }
 
 CheckerBoard::~CheckerBoard()
@@ -100,6 +110,19 @@ void CheckerBoard::Draw()
 void CheckerBoard::Update(float dt)
 {
 	m_camera.Update(dt);
+
+	CheckWinner();
+
+	if (m_gameState == PLAYER)
+	{
+		std::cout << "PLAYER WINS!" << std::endl;
+		Reset();
+	}
+	else if (m_gameState == AI)
+	{
+		std::cout << "AI WINS!" << std::endl;
+		Reset();
+	}
 
 	if (m_playerTurn)
 	{

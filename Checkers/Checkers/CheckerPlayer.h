@@ -26,6 +26,8 @@ public:
 
 	void SetBoardState(PieceType** currentState);
 
+	void Reset();
+
 protected:
 	Piece m_pieces[12];
 	Piece* m_currentPiece;
